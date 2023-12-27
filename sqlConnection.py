@@ -1,0 +1,2 @@
+class sqlConnection(object):
+    pass
