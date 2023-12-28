@@ -1,2 +1,0 @@
-class sqlConnection(object):
-    pass
