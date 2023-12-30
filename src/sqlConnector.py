@@ -2,8 +2,8 @@ import mysql.connector
 import json
 class sqlConnector:
 
-    def __init__(self):
-        with open('./db_config.json') as config_file:
+    def __init__(self, config_file_path):
+        with open(config_file_path) as config_file:
             config = json.load(config_file)
             self.mydb = mysql.connector.connect(
                 host=config['host'],
