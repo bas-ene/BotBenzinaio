@@ -20,6 +20,13 @@ def downloadFile(url, outputFile):
         r.close()   
         return r.text
 
+def parse_command(command):
+    command = command.split(' ')
+    if(len(command) < 2):
+        return False
+    else:
+        return ' '.join(command[1:])
+
 
 #main func
 if __name__ == "__main__":
@@ -52,11 +59,57 @@ if __name__ == "__main__":
                 print('new user')
                 #insert new user
                 conn.insertUser(user_id, username)
-                threading.Thread(target=telBot.setUpNewUser, args=(user_id, 0)).start()
+                telBot.setUpNewUser(user_id)
             else:
                 print('old user')
             #get the type of message
-            
+            message_text = message['message']['text']
+            if(message_text == '/help'):
+                telBot.sendHelp(user_id)
+            elif(message_text.startswith('/carburante')):
+                #set carburante
+                value = parse_command(message_text)
+                if(value):
+                    success = conn.setCarburante(user_id, value)
+                    if(success):
+                        telBot.sendMessage(user_id, 'Carburante impostato correttamente')
+                    else:
+                        telBot.sendMessage(user_id, 'Errore durante l\'impostazione del carburante, potrebbe non essere nel nostro database')
+                else:
+                    telBot.sendMessage(user_id, 'Devi specificare il tipo di carburante')
+            elif(message_text.startswith('/consumo')):
+                #set consumo
+                value = parse_command(message_text)
+                if(value):
+                    success = conn.setConsumo(user_id, value)
+                    if(success):
+                        telBot.sendMessage(user_id, 'Consumo impostato correttamente')
+                    else:
+                        telBot.sendMessage(user_id, 'Errore durante l\'impostazione del consumo')
+                else:
+                    telBot.sendMessage(user_id, 'Devi specificare il consumo')
+            elif(message_text.startswith('/serbatoio')):
+                #set serbatoio
+                value = parse_command(message_text)
+                if(value):
+                    success = conn.setSerbatoio(user_id, value)
+                    if(success):
+                        telBot.sendMessage(user_id, 'Serbatoio impostato correttamente')
+                    else:
+                        telBot.sendMessage(user_id, 'Errore durante l\'impostazione del serbatoio')
+                else:
+                    telBot.sendMessage(user_id, 'Devi specificare la capienza del serbatoio')
+            elif(message_text.startswith('/km')):
+                #set km
+                value = parse_command(message_text)
+                if(value):
+                    success = conn.setMaxKm(user_id, value)
+                    if(success):
+                        telBot.sendMessage(user_id, 'Km impostati correttamente')
+                    else:
+                        telBot.sendMessage(user_id, 'Errore durante l\'impostazione dei km')
+                else:
+                    telBot.sendMessage(user_id, 'Devi specificare i km')
             #do something
 
         #sleep
