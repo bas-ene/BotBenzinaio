@@ -27,17 +27,42 @@ def parse_command(command):
     else:
         return ' '.join(command[1:])
 
+def parse_csv(csv_data):
+    #format: day of extraction 
+    #        list of coloumns
+    #        list of data
+    #read first line for getting the number of coloumns
+    coloumns = csv_data.split('\n')[1]
+    csv_data = csv_data.split('\n')[2:]
+    benzinai = []
+    for line in csv_data: 
+        #split the line
+        line = line.split(';')
+        print(line)
+        #check if the line is empty
+        if(line == ['']):
+            continue
+        #create the dict
+        benzinai.append([line[0], line[-2], line[-1]])
+    return benzinai
 
 #main func
 if __name__ == "__main__":
    
     #download updated prices and details about gas pumps
-    # with open('./data/prezzi.csv', 'w') as file_prezzi:
-    #     csv_data_prezzi = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prezzi)
-    # with open('./data/anagrafica.csv', 'w') as  file_anagrafica :
-    #     csv_data_anag = downloadFile('https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv', file_anagrafica)
     #create sql connection
+    print("connettendo a db")
     conn = sqlConnector('./data/db_config.json')
+    print("connesso a database")
+    # with open('./data/prezzi.csv', 'w') as file_prezzi:
+    #     print('scaricando prezzi')
+    #     csv_data_prezzi = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prezzi)
+        #carica prezzi
+    with open('./data/anagrafica.csv', 'w') as  file_anagrafica :
+        print('scaricando anagrafica')
+        csv_data_anag = downloadFile('https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv', file_anagrafica)
+        print('caricando anagrafica in db')
+        conn.caricaAnagrafica(parse_csv(csv_data_anag))
     #put the csv info in the 
 
     #get bot 

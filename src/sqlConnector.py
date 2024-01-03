@@ -65,3 +65,19 @@ class sqlConnector:
         self.mydb.commit()
         print(self.mycursor.rowcount, "record(s) affected")
         return True
+
+    def caricaAnagrafica(self, data):
+        for benzinaio in data:
+            print(benzinaio)
+            try:
+                print('inserting in db')
+                sql = "INSERT INTO benzinai (idImpianto, latitudine, longitudine) VALUES (%s, %s, %s)"
+                val = ( benzinaio[0], benzinaio[1], benzinaio[2])
+                print('executing query')
+                self.mycursor.execute(sql, val)
+                print('committing')
+                self.mydb.commit()
+                print(self.mycursor.rowcount, "record inserted.")
+            except(Exception): 
+                print('error inserting in db')
+        print('finished loading anagrafica in db')
