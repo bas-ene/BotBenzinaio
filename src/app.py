@@ -36,15 +36,18 @@ def parse_csv(csv_data):
     csv_data = csv_data.split('\n')[2:]
     benzinai = []
     for line in csv_data: 
-        #split the line
-        line = line.split(';')
-        print(line)
         #check if the line is empty
         if(line == ['']):
             continue
-        #create the dict
-        benzinai.append([line[0], line[-2], line[-1]])
-    return benzinai
+        #split the line
+        line = line.split(';')
+        #create a new dict
+        new_benzinaio = {}
+        #for each coloumn
+        for i in range(len(coloumns)):
+            #add the value to the dict
+            new_benzinaio[coloumns[i]] = line[i]
+            return benzinai
 
 #main func
 if __name__ == "__main__":
@@ -54,16 +57,16 @@ if __name__ == "__main__":
     print("connettendo a db")
     conn = sqlConnector('./data/db_config.json')
     print("connesso a database")
-    # with open('./data/prezzi.csv', 'w') as file_prezzi:
-    #     print('scaricando prezzi')
-    #     csv_data_prezzi = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prezzi)
+    with open('./data/prezzi.csv', 'w') as file_prezzi:
+        print('scaricando prezzi')
+        csv_data_prezzi = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prezzi)
+        conn.loadPrices(parse_csv(csv_data_prezzi))
         #carica prezzi
-    with open('./data/anagrafica.csv', 'w') as  file_anagrafica :
-        print('scaricando anagrafica')
-        csv_data_anag = downloadFile('https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv', file_anagrafica)
-        print('caricando anagrafica in db')
-        conn.caricaAnagrafica(parse_csv(csv_data_anag))
-    #put the csv info in the 
+    # with open('./data/anagrafica.csv', 'w') as  file_anagrafica :
+    #     print('scaricando anagrafica')
+    #     csv_data_anag = downloadFile('https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv', file_anagrafica)
+    #     print('caricando anagrafica in db')
+    #     conn.caricaAnagrafica(parse_csv(csv_data_anag))
 
     #get bot 
     telBot = telegramBot(readBotToken())

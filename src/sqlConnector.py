@@ -66,13 +66,35 @@ class sqlConnector:
         print(self.mycursor.rowcount, "record(s) affected")
         return True
 
-    def caricaAnagrafica(self, data):
-        for benzinaio in data:
-            print(benzinaio)
+    def loadGasPumps(self, data):
+        sql = "INSERT INTO benzinai (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longudine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        for gas_pump in data:
+            for field in gas_pump:
+                if(field == ''):
+                    field = 'NULL'
+            print(gas_pump)
             try:
                 print('inserting in db')
-                sql = "INSERT INTO benzinai (idImpianto, latitudine, longitudine) VALUES (%s, %s, %s)"
-                val = ( benzinaio[0], benzinaio[1], benzinaio[2])
+                val = [field for field in gas_pump]
+                print('executing query')
+                self.mycursor.execute(sql, val)
+                print('committing')
+                self.mydb.commit()
+                print(self.mycursor.rowcount, "record inserted.")
+            except(Exception): 
+                print('error inserting in db')
+        print('finished loading gas pumps in db')
+
+    def loadPrices(self, data):
+        sql = "INSERT INTO benzinai (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longudine) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        for gas_pump in data:
+            for field in gas_pump:
+                if(field == ''):
+                    field = 'NULL'
+            print(gas_pump)
+            try:
+                print('inserting in db')
+                val = [field for field in gas_pump]
                 print('executing query')
                 self.mycursor.execute(sql, val)
                 print('committing')
