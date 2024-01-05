@@ -2,7 +2,7 @@
 from time import sleep
 from sqlConnector import sqlConnector
 from telegramBot import telegramBot
-import requests,json, threading
+import requests, json
 #global vars
 path_bottoken = './data/token_bot.json'
 url_bot_telegram = 'https://api.telegram.org/bot'
@@ -27,27 +27,29 @@ def parse_command(command):
     else:
         return ' '.join(command[1:])
 
-def parse_csv(csv_data):
+def parse_csv(csv_lines):
     #format: day of extraction 
     #        list of coloumns
     #        list of data
     #read first line for getting the number of coloumns
-    coloumns = csv_data.split('\n')[1]
-    csv_data = csv_data.split('\n')[2:]
-    benzinai = []
-    for line in csv_data: 
-        #check if the line is empty
-        if(line == ['']):
-            continue
+    coloumns = csv_lines.split('\n')[1].split(';')
+    csv_lines = csv_lines.split('\n')[2:]
+    parsed_lines = []
+    for line in csv_lines: 
         #split the line
         line = line.split(';')
         #create a new dict
+        #check if the line is empty
+        if(line == ['']):
+            continue
         new_benzinaio = {}
         #for each coloumn
         for i in range(len(coloumns)):
             #add the value to the dict
             new_benzinaio[coloumns[i]] = line[i]
-            return benzinai
+        #add the dict to the list
+        parsed_lines.append(new_benzinaio)
+    return parsed_lines
 
 #main func
 if __name__ == "__main__":
@@ -60,7 +62,10 @@ if __name__ == "__main__":
     with open('./data/prezzi.csv', 'w') as file_prezzi:
         print('scaricando prezzi')
         csv_data_prezzi = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prezzi)
-        conn.loadPrices(parse_csv(csv_data_prezzi))
+        parsed_data = parse_csv(csv_data_prezzi)
+        for data in parsed_data:
+            del data['dtComu']
+        conn.loadPrices(parsed_data)
         #carica prezzi
     # with open('./data/anagrafica.csv', 'w') as  file_anagrafica :
     #     print('scaricando anagrafica')
@@ -98,7 +103,7 @@ if __name__ == "__main__":
                 #set carburante
                 value = parse_command(message_text)
                 if(value):
-                    success = conn.setCarburante(user_id, value)
+                    success = conn.setGasType(user_id, value)
                     if(success):
                         telBot.sendMessage(user_id, 'Carburante impostato correttamente')
                     else:
@@ -109,7 +114,7 @@ if __name__ == "__main__":
                 #set consumo
                 value = parse_command(message_text)
                 if(value):
-                    success = conn.setConsumo(user_id, value)
+                    success = conn.setEfficiency(user_id, value)
                     if(success):
                         telBot.sendMessage(user_id, 'Consumo impostato correttamente')
                     else:
@@ -120,7 +125,7 @@ if __name__ == "__main__":
                 #set serbatoio
                 value = parse_command(message_text)
                 if(value):
-                    success = conn.setSerbatoio(user_id, value)
+                    success = conn.setTankCapacity(user_id, value)
                     if(success):
                         telBot.sendMessage(user_id, 'Serbatoio impostato correttamente')
                     else:

@@ -27,30 +27,30 @@ class sqlConnector:
         self.mydb.commit()
         print(self.mycursor.rowcount, "record inserted.")
 
-    def setCarburante(self, chat_id, carburante):
+    def setGasType(self, chat_id, gas):
         # if carburante not in self.carburanti:
         #     return False
-        sql = f"UPDATE users SET tipo = '{carburante.lower()}' WHERE userId = {chat_id}"
+        sql = f"UPDATE users SET tipo = '{gas.lower()}' WHERE userId = {chat_id}"
         self.mycursor.execute(sql)
         self.mydb.commit()
         print(self.mycursor.rowcount, "record(s) affected")
         return True
     
-    def setConsumo(self, chat_id, consumo):
-        if(consumo.find(',') != -1):
-            consumo = consumo.replace(',', '.')
-        consumo = float(consumo)
-        sql = f"UPDATE users SET consumo = {consumo} WHERE userId = {chat_id}"
+    def setEfficiency(self, chat_id, efficiency):
+        if(efficiency.find(',') != -1):
+            efficiency = efficiency.replace(',', '.')
+        efficiency = float(efficiency)
+        sql = f"UPDATE users SET consumo = {efficiency} WHERE userId = {chat_id}"
         self.mycursor.execute(sql)
         self.mydb.commit()
         print(self.mycursor.rowcount, "record(s) affected")
         return True
     
-    def setSerbatoio(self, chat_id, capacita):
-        if(capacita.find(',') != -1):
-            capacita = capacita.replace(',', '.')
-        capacita = float(capacita)
-        sql = f"UPDATE users SET capacita = {capacita} WHERE userId = {chat_id}"
+    def setTankCapacity(self, chat_id, capacity):
+        if(capacity.find(',') != -1):
+            capacity = capacity.replace(',', '.')
+        capacity = float(capacity)
+        sql = f"UPDATE users SET capacita = {capacity} WHERE userId = {chat_id}"
         self.mycursor.execute(sql)
         self.mydb.commit()
         print(self.mycursor.rowcount, "record(s) affected")
@@ -67,7 +67,7 @@ class sqlConnector:
         return True
 
     def loadGasPumps(self, data):
-        sql = "INSERT INTO benzinai (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longudine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO gaspumps (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longudine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         for gas_pump in data:
             for field in gas_pump:
                 if(field == ''):
@@ -75,7 +75,7 @@ class sqlConnector:
             print(gas_pump)
             try:
                 print('inserting in db')
-                val = [field for field in gas_pump]
+                val = list(gas_pump.values())
                 print('executing query')
                 self.mycursor.execute(sql, val)
                 print('committing')
@@ -86,20 +86,21 @@ class sqlConnector:
         print('finished loading gas pumps in db')
 
     def loadPrices(self, data):
-        sql = "INSERT INTO benzinai (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longudine) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        for gas_pump in data:
-            for field in gas_pump:
+        sql = "INSERT INTO prices (idImpianto, descCarburante, prezzo, isSelf) VALUES (%s, %s, %s,%s)"
+        for price in data:
+            for field in price:
                 if(field == ''):
                     field = 'NULL'
-            print(gas_pump)
+            print(price)
             try:
                 print('inserting in db')
-                val = [field for field in gas_pump]
+                val = list(price.values())
                 print('executing query')
                 self.mycursor.execute(sql, val)
                 print('committing')
                 self.mydb.commit()
                 print(self.mycursor.rowcount, "record inserted.")
-            except(Exception): 
+            except Exception as e:
                 print('error inserting in db')
-        print('finished loading anagrafica in db')
+                print(e)
+        print('finished loading prices in db')
