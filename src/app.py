@@ -20,14 +20,14 @@ def downloadFile(url, outputFile):
         r.close()   
         return r.text
 
-def parse_command(command):
+def parseCommand(command):
     command = command.split(' ')
-    if(len(command) < 2):
-        return False
+    if(len(command) == 1):
+        return [command[0], '']
     else:
-        return ' '.join(command[1:])
+        return [command[0], ' '.join(command[1:])]
 
-def parse_csv(csv_lines):
+def parseCsv(csv_lines):
     #format: day of extraction 
     #        list of coloumns
     #        list of data
@@ -42,39 +42,82 @@ def parse_csv(csv_lines):
         #check if the line is empty
         if(line == ['']):
             continue
-        new_benzinaio = {}
+        line_dict = {}
         #for each coloumn
         for i in range(len(coloumns)):
             #add the value to the dict
-            new_benzinaio[coloumns[i]] = line[i]
+            line_dict[coloumns[i]] = line[i]
         #add the dict to the list
-        parsed_lines.append(new_benzinaio)
+        parsed_lines.append(line_dict)
     return parsed_lines
+
+def handleMessage(message_data):
+        command = parseCommand(message_data)
+        if not command: 
+            telBot.sendMessage(user_id, 'Per favore inserisci un valore per il comando')
+            return
+        match command[0]:            
+            case '/help':
+                telBot.sendHelp(user_id)
+            case '/carburante':
+                success = conn.setGasType(user_id, command[1])
+                if(success):
+                    telBot.sendMessage(user_id, 'Carburante impostato correttamente')
+                else:
+                    telBot.sendMessage(user_id, 'Errore durante l\'impostazione del carburante, potrebbe non essere nel nostro database')
+            case '/consumo':
+                success = conn.setEfficiency(user_id, command[1])
+                if(success):
+                    telBot.sendMessage(user_id, 'Consumo impostato correttamente')
+                else:
+                    telBot.sendMessage(user_id, 'Errore durante l\'impostazione del consumo')
+            case '/serbatoio':
+                success = conn.setTankCapacity(user_id, command[1])
+                if(success):
+                    telBot.sendMessage(user_id, 'Serbatoio impostato correttamente')
+                else:
+                    telBot.sendMessage(user_id, 'Errore durante l\'impostazione del serbatoio')
+            case '/km':
+                success = conn.setMaxKm(user_id, command[1])
+                if(success):
+                    telBot.sendMessage(user_id, 'Km impostati correttamente')
+                else:
+                    telBot.sendMessage(user_id, 'Errore durante l\'impostazione dei km')
+            case _: 
+                telBot.sendMessage(user_id, 'Comando non riconosciuto')
+
+def handleLocation(location_data, user_id):
+    longitude = location_data['longitude']
+    latitude = location_data['latitude']
+    #get the gas pumps near the location
+    gas_pumps = conn.getGasPumpsNearUser(longitude, latitude, user_id)
+    print(gas_pumps)
 
 #main func
 if __name__ == "__main__":
-   
+
     #download updated prices and details about gas pumps
     #create sql connection
-    print("connettendo a db")
+    print("connecting to database")
     conn = sqlConnector('./data/db_config.json')
-    print("connesso a database")
-    with open('./data/prezzi.csv', 'w') as file_prezzi:
-        print('scaricando prezzi')
-        csv_data_prezzi = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prezzi)
-        parsed_data = parse_csv(csv_data_prezzi)
-        for data in parsed_data:
-            del data['dtComu']
-        conn.loadPrices(parsed_data)
-        #carica prezzi
-    # with open('./data/anagrafica.csv', 'w') as  file_anagrafica :
-    #     print('scaricando anagrafica')
-    #     csv_data_anag = downloadFile('https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv', file_anagrafica)
-    #     print('caricando anagrafica in db')
-    #     conn.caricaAnagrafica(parse_csv(csv_data_anag))
+    
+    # with open('./data/prezzi.csv', 'w') as file_prezzi:
+    #     print('downloading prices')
+    #     csv_data_prezzi = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prezzi)
+    #     parsed_data = parseCsv(csv_data_prezzi)
+    #     for data in parsed_data:
+    #         del data['dtComu']
+    #     conn.loadPrices(parsed_data)
+    # 
+    # with open('./data/anagrafica.csv', 'w') as file_gas_pumps:
+    #     print('downloading gas pumps details')
+    #     csv_data_anag = downloadFile('https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv', file_gas_pumps)
+    #     print('loading gas pumps details in database')
+    #     conn.loadGasPumps(parseCsv(csv_data_anag))
 
     #get bot 
     telBot = telegramBot(readBotToken())
+
     while True:
         #get new messages
         data = telBot.getUpdates()
@@ -95,54 +138,14 @@ if __name__ == "__main__":
                 telBot.setUpNewUser(user_id)
             else:
                 print('old user')
+            
             #get the type of message
-            message_text = message['message']['text']
-            if(message_text == '/help'):
-                telBot.sendHelp(user_id)
-            elif(message_text.startswith('/carburante')):
-                #set carburante
-                value = parse_command(message_text)
-                if(value):
-                    success = conn.setGasType(user_id, value)
-                    if(success):
-                        telBot.sendMessage(user_id, 'Carburante impostato correttamente')
-                    else:
-                        telBot.sendMessage(user_id, 'Errore durante l\'impostazione del carburante, potrebbe non essere nel nostro database')
-                else:
-                    telBot.sendMessage(user_id, 'Devi specificare il tipo di carburante')
-            elif(message_text.startswith('/consumo')):
-                #set consumo
-                value = parse_command(message_text)
-                if(value):
-                    success = conn.setEfficiency(user_id, value)
-                    if(success):
-                        telBot.sendMessage(user_id, 'Consumo impostato correttamente')
-                    else:
-                        telBot.sendMessage(user_id, 'Errore durante l\'impostazione del consumo')
-                else:
-                    telBot.sendMessage(user_id, 'Devi specificare il consumo')
-            elif(message_text.startswith('/serbatoio')):
-                #set serbatoio
-                value = parse_command(message_text)
-                if(value):
-                    success = conn.setTankCapacity(user_id, value)
-                    if(success):
-                        telBot.sendMessage(user_id, 'Serbatoio impostato correttamente')
-                    else:
-                        telBot.sendMessage(user_id, 'Errore durante l\'impostazione del serbatoio')
-                else:
-                    telBot.sendMessage(user_id, 'Devi specificare la capienza del serbatoio')
-            elif(message_text.startswith('/km')):
-                #set km
-                value = parse_command(message_text)
-                if(value):
-                    success = conn.setMaxKm(user_id, value)
-                    if(success):
-                        telBot.sendMessage(user_id, 'Km impostati correttamente')
-                    else:
-                        telBot.sendMessage(user_id, 'Errore durante l\'impostazione dei km')
-                else:
-                    telBot.sendMessage(user_id, 'Devi specificare i km')
+            message_data = message['message']
+            print(message_data)
+            if 'location' in message_data:
+                handleLocation(message_data['location'], user_id)
+            elif 'text' in message_data:
+                handleMessage(message_data['text'])
             #do something
 
         #sleep

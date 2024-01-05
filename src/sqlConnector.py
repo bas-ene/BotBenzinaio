@@ -65,9 +65,15 @@ class sqlConnector:
         self.mydb.commit()
         print(self.mycursor.rowcount, "record(s) affected")
         return True
+    
+    def getMaxKm(self, chat_id):
+        sql = f"SELECT maxkm FROM users WHERE userId = {chat_id}"
+        self.mycursor.execute(sql)
+        myresult = self.mycursor.fetchall()
+        return myresult[0][0]
 
     def loadGasPumps(self, data):
-        sql = "INSERT INTO gaspumps (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longudine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO gaspumps (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longitudine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         for gas_pump in data:
             for field in gas_pump:
                 if(field == ''):
@@ -75,14 +81,15 @@ class sqlConnector:
             print(gas_pump)
             try:
                 print('inserting in db')
-                val = list(gas_pump.values())
+                val = [gas_pump['idImpianto'], gas_pump['Gestore'], gas_pump['Bandiera'], gas_pump['Tipo Impianto'], gas_pump['Nome Impianto'], gas_pump['Indirizzo'], gas_pump['Comune'], gas_pump['Provincia'], gas_pump['Latitudine'], gas_pump['Longitudine']]
                 print('executing query')
                 self.mycursor.execute(sql, val)
                 print('committing')
                 self.mydb.commit()
                 print(self.mycursor.rowcount, "record inserted.")
-            except(Exception): 
+            except Exception as e: 
                 print('error inserting in db')
+                print(e)
         print('finished loading gas pumps in db')
 
     def loadPrices(self, data):
@@ -94,7 +101,7 @@ class sqlConnector:
             print(price)
             try:
                 print('inserting in db')
-                val = list(price.values())
+                val = [price['idImpianto'], price['descCarburante'], price['prezzo'], price['isSelf']]
                 print('executing query')
                 self.mycursor.execute(sql, val)
                 print('committing')
@@ -104,3 +111,12 @@ class sqlConnector:
                 print('error inserting in db')
                 print(e)
         print('finished loading prices in db')
+    
+    def getGasPumpsNearUser(self, longitude, latitude, user_id):
+        maxKm = self.getMaxKm(user_id)
+        sql = f'''SELECT *, SQRT(POW(latitudine - {latitude}, 2) + POW(longitudine - {longitude},2)) AS dist 
+        FROM gaspumps 
+        ORDER BY dist ASC'''
+        self.mycursor.execute(sql)
+        myresult = self.mycursor.fetchall()
+        return myresult
