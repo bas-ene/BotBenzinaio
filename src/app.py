@@ -2,17 +2,22 @@
 from time import sleep
 from sqlConnector import sqlConnector
 from telegramBot import telegramBot
+from ors_service import ors_service
 import requests, json
-#global vars
-path_bottoken = './data/token_bot.json'
-url_bot_telegram = 'https://api.telegram.org/bot'
+
+#global conts
+PATHTOKENBOT = './data/token_bot.json'
+PATHORSTOKEN = './data/ors_token.json'
+PATHPRICES = './data/prezzi.csv'
+PATHGASPUMPS = './data/anagrafica.csv'
+PATHCONFIGDB = './data/db_config.json'
 
 #functions
-def readBotToken():
-    bot_token = ''
-    with open(path_bottoken, 'r') as bot_token_file:
-        bot_token = json.loads(bot_token_file.read())['token']
-    return bot_token
+def readToken(token_path):
+    token = ''
+    with open(token_path, 'r') as token_file:
+        token = json.loads(token_file.read())['token']
+    return token
 
 def downloadFile(url, outputFile):
     with requests.get(url) as r:
@@ -47,8 +52,8 @@ def parseCsv(csv_lines):
         for i in range(len(coloumns)):
             #add the value to the dict
             line_dict[coloumns[i]] = line[i]
-        #add the dict to the list
-        parsed_lines.append(line_dict)
+            #add the dict to the list
+            parsed_lines.append(line_dict)
     return parsed_lines
 
 def handleMessage(message_data):
@@ -86,12 +91,18 @@ def handleMessage(message_data):
             case _: 
                 telBot.sendMessage(user_id, 'Comando non riconosciuto')
 
-def handleLocation(location_data, user_id):
+def handleLocation(location_data):
     longitude = location_data['longitude']
     latitude = location_data['latitude']
     #get the gas pumps near the location
-    gas_pumps = conn.getGasPumpsNearUser(longitude, latitude, user_id)
-    print(gas_pumps)
+    gas_pumps = conn.getGasPumpsNearUser(longitude, latitude, 1)
+    ors = ors_service(readToken(PATHORSTOKEN))
+    for gas_pump in gas_pumps:
+        #get real distance from user
+        datajson = ors.get_directions([longitude, latitude], [ gas_pump[9], gas_pump[8]])
+        #get nearest
+        #get most convenient
+        print(datajson['routes'][0]['summary']['distance'])
 
 #main func
 if __name__ == "__main__":
@@ -99,24 +110,24 @@ if __name__ == "__main__":
     #download updated prices and details about gas pumps
     #create sql connection
     print("connecting to database")
-    conn = sqlConnector('./data/db_config.json')
+    conn = sqlConnector(PATHCONFIGDB)
     
-    # with open('./data/prezzi.csv', 'w') as file_prezzi:
+    # with open(PATHPRICES, 'w') as file_prices:
     #     print('downloading prices')
-    #     csv_data_prezzi = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prezzi)
-    #     parsed_data = parseCsv(csv_data_prezzi)
+    #     csv_data_prices = downloadFile('https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv', file_prices)
+    #     parsed_data = parseCsv(csv_data_prices)
     #     for data in parsed_data:
     #         del data['dtComu']
     #     conn.loadPrices(parsed_data)
-    # 
-    # with open('./data/anagrafica.csv', 'w') as file_gas_pumps:
+    #
+    # with open(PATHGASPUMPS, 'w') as file_gas_pumps:
     #     print('downloading gas pumps details')
-    #     csv_data_anag = downloadFile('https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv', file_gas_pumps)
+    #     csv_data_gaspumps = downloadFile('https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv', file_gas_pumps)
     #     print('loading gas pumps details in database')
-    #     conn.loadGasPumps(parseCsv(csv_data_anag))
+    #     conn.loadGasPumps(parseCsv(csv_data_gaspumps))
 
     #get bot 
-    telBot = telegramBot(readBotToken())
+    telBot = telegramBot(readToken(PATHTOKENBOT))
 
     while True:
         #get new messages
@@ -143,7 +154,7 @@ if __name__ == "__main__":
             message_data = message['message']
             print(message_data)
             if 'location' in message_data:
-                handleLocation(message_data['location'], user_id)
+                handleLocation(message_data['location'])
             elif 'text' in message_data:
                 handleMessage(message_data['text'])
             #do something

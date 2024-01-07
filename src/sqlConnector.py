@@ -11,9 +11,9 @@ class sqlConnector:
                 password=config['password'],
                 database=config['database']
             )
-            self.mycursor = self.mydb.cursor()
-            self.mycursor.execute('SELECT DISTINCT tipo FROM users')
-            self.carburanti = self.mycursor.fetchall()
+        self.mycursor = self.mydb.cursor()
+        self.mycursor.execute('SELECT DISTINCT tipo FROM users')
+        self.carburanti = self.mycursor.fetchall()
     
     def getUser(self, chat_id):
         self.mycursor.execute(f'SELECT * FROM users WHERE userId = {chat_id}')
@@ -112,11 +112,12 @@ class sqlConnector:
                 print(e)
         print('finished loading prices in db')
     
-    def getGasPumpsNearUser(self, longitude, latitude, user_id):
-        maxKm = self.getMaxKm(user_id)
+    def getGasPumpsNearUser(self, longitude, latitude,  num_results):
         sql = f'''SELECT *, SQRT(POW(latitudine - {latitude}, 2) + POW(longitudine - {longitude},2)) AS dist 
         FROM gaspumps 
-        ORDER BY dist ASC'''
+        ORDER BY dist ASC
+        LIMIT {num_results}
+        '''
         self.mycursor.execute(sql)
         myresult = self.mycursor.fetchall()
         return myresult
