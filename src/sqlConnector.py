@@ -71,6 +71,16 @@ class sqlConnector:
         self.mycursor.execute(sql)
         myresult = self.mycursor.fetchall()
         return myresult[0][0]
+    
+    def updateField(self, field = str(), value = str(), table = str(), condition = 1):
+        try:
+            sql = f'UPDATE {table} SET {field} = {value} WHERE {condition}'
+            self.mycursor.execute(sql)
+            self.mydb.commit()
+            print(self.mycursor.rowcount, "record(s) affected")
+        except Exception as e:
+            print(e)
+            return False
 
     def loadGasPumps(self, data):
         sql = "INSERT INTO gaspumps (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longitudine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
