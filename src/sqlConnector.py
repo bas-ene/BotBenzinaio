@@ -16,8 +16,7 @@ class sqlConnector:
         self.carburanti = self.mycursor.fetchall()
     
     def getUser(self, chat_id):
-        self.mycursor.execute(f'SELECT * FROM users WHERE userId = {chat_id}')
-        myresult = self.mycursor.fetchall()
+        myresult = self.getField('*', 'users', f'userId = {chat_id}')
         return myresult
     
     def insertUser(self, user_id, username):
@@ -66,12 +65,12 @@ class sqlConnector:
         print(self.mycursor.rowcount, "record(s) affected")
         return True
     
-    def getField(self, field = str(), table = str(), condition = 1):
+    def getField(self, field = str(), table = str(), condition = "1"):
         sql = f"SELECT {field} FROM {table} WHERE {condition}"
         self.mycursor.execute(sql)
         myresult = self.mycursor.fetchall()
-        return myresult[0][0]
-    
+        return myresult
+
     def updateField(self, field = str(), value = str(), table = str(), condition = 1):
         try:
             sql = f'UPDATE {table} SET {field} = {value} WHERE {condition}'
