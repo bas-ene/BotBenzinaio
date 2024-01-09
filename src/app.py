@@ -3,7 +3,7 @@ from time import sleep
 from sqlConnector import sqlConnector
 from telegramBot import telegramBot
 from ors_service import ors_service
-import requests, json
+import requests, json, concurrent.futures
 
 #global conts
 PATHTOKENBOT = './data/token_bot.json'
@@ -143,7 +143,10 @@ if __name__ == "__main__":
 
     #get ors service
     ors = ors_service(readToken(PATHORSTOKEN))
-
+    
+    #create thread pool
+    thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=20)
+    
     while True:
         #get new messages
         data = telBot.getUpdates()
@@ -169,9 +172,9 @@ if __name__ == "__main__":
             message_data = message['message']
             print(message_data)
             if 'location' in message_data:
-                handleLocation(message_data['location'], user_id, ors, db_conn)
+                thread_pool.submit(handleLocation, message_data['location'], user_id, ors, db_conn)
             elif 'text' in message_data:
-                handleMessage(message_data['text'], db_conn, telBot)
+                thread_pool.submit(handleMessage,message_data['text'], db_conn, telBot)
             #do something
 
         #sleep
