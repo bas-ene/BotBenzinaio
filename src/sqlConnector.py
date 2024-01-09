@@ -16,8 +16,7 @@ class sqlConnector:
         self.carburanti = self.mycursor.fetchall()
     
     def getUser(self, chat_id):
-        self.mycursor.execute(f'SELECT * FROM users WHERE userId = {chat_id}')
-        myresult = self.mycursor.fetchall()
+        myresult = self.getField('*', 'users', f'userId = {chat_id}')
         return myresult
     
     def insertUser(self, user_id, username):
@@ -70,7 +69,7 @@ class sqlConnector:
         sql = f"SELECT {field} FROM {table} WHERE {condition}"
         self.mycursor.execute(sql)
         myresult = self.mycursor.fetchall()
-        return myresult[0][0]
+        return myresult
 
     def loadGasPumps(self, data):
         sql = "INSERT INTO gaspumps (idImpianto, gestore, bandiera, tipo, nome, indirizzo, comune, provincia, latitudine, longitudine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
