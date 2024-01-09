@@ -66,8 +66,8 @@ class sqlConnector:
         print(self.mycursor.rowcount, "record(s) affected")
         return True
     
-    def getMaxKm(self, chat_id):
-        sql = f"SELECT maxkm FROM users WHERE userId = {chat_id}"
+    def getField(self, field = str(), table = str(), condition = 1):
+        sql = f"SELECT {field} FROM {table} WHERE {condition}"
         self.mycursor.execute(sql)
         myresult = self.mycursor.fetchall()
         return myresult[0][0]
