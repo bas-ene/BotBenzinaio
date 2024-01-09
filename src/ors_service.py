@@ -9,12 +9,15 @@ class ors_service:
             }       
 
 
-    def get_directions(self, start = [8.681495,49.41461], end = [8.687872,49.420318]):
+    def getDirections(self, start = {'longitude': 8.681495, 'longitude': 49.41461}, end = {'longitude': 8.681495, 'longitude': 49.41461}):
         body = {
             'coordinates': [
-                start,
-                end
+                [start['longitude'], start['latitude']],
+                [end['longitude'], end['latitude']]
             ],
         }
         response = requests.post(self.directions_url, json=body, headers=self.headers)
         return response.json()
+
+    def getDistance(self, jsondata):
+        return jsondata['routes'][0]['summary']['distance']

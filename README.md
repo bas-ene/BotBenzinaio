@@ -1,5 +1,4 @@
 # Cose da fare
-- capire se mess comando o posizione
-- api per distanza
+- bisogna vedere anche in base al carburante, quindi join in query per gas_pumps, e a sto punto ritorno anche costo
 - calcolare piu vicino e piu conveniente
 - restituire posizione a utente

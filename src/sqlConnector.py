@@ -112,8 +112,9 @@ class sqlConnector:
                 print(e)
         print('finished loading prices in db')
     
-    def getGasPumpsNearUser(self, longitude, latitude,  num_results):
-        sql = f'''SELECT *, SQRT(POW(latitudine - {latitude}, 2) + POW(longitudine - {longitude},2)) AS dist 
+    def getGasPumpsNearUser(self, position = {'latitude': 0, 'longitude':0},  num_results = 100, user = 0):
+        # WHERE d = 2R × sin⁻¹(√[sin²((θ₂ - θ₁)/2) + cosθ₁ × cosθ₂ × sin²((φ₂ - φ₁)/2)]) < MAXDISTANCE
+        sql = f'''SELECT *, SQRT(POW(latitudine - {position["latitude"]}, 2) + POW(longitudine - {position["longitude"]},2)) AS dist 
         FROM gaspumps 
         ORDER BY dist ASC
         LIMIT {num_results}
